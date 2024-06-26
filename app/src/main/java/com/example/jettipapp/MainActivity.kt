@@ -4,6 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,9 +34,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            CreateJetTipApp{ innerPadding ->
+            CreateJetTipApp { innerPadding ->
                 TopHeader(innerPadding = innerPadding)
-                CalculateTip()
+                MainContent()
             }
         }
     }
@@ -93,7 +94,18 @@ fun TopHeader(totalPerSon: Double = 0.0, innerPadding: PaddingValues = PaddingVa
     }
 }
 
+@Preview
 @Composable
-fun CalculateTip(){
+fun MainContent() {
+    Surface(
+        modifier = Modifier
+            .padding(2.dp)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        border = BorderStroke(width = 2.dp, color = Color.LightGray)
+    ) {
+        Column {
 
+        }
+    }
 }
