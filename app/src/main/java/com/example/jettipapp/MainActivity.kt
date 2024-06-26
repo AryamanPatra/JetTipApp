@@ -24,7 +24,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.jettipapp.ui.theme.JetTipAppTheme
+import com.example.jettipapp.ui.theme.poppinsFontFamily
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -32,7 +34,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CreateJetTipApp{ innerPadding ->
-                TotalPerPerson(innerPadding)
+                TopHeader(innerPadding = innerPadding)
                 CalculateTip()
             }
         }
@@ -42,7 +44,11 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun CreateJetTipApp(content: @Composable (innerPadding: PaddingValues) -> Unit) {
     JetTipAppTheme {
-        Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+        Scaffold(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(horizontal = 10.dp)
+        ) { innerPadding ->
             content(innerPadding)
         }
     }
@@ -50,7 +56,8 @@ fun CreateJetTipApp(content: @Composable (innerPadding: PaddingValues) -> Unit) 
 
 @Preview
 @Composable
-fun TotalPerPerson(innerPadding: PaddingValues = PaddingValues()) {
+fun TopHeader(totalPerSon: Double = 0.0, innerPadding: PaddingValues = PaddingValues()) {
+    val total = "%.2f".format(totalPerSon)
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -69,13 +76,18 @@ fun TotalPerPerson(innerPadding: PaddingValues = PaddingValues()) {
             Text(
                 text = "Total Per Person",
                 color = Color.Black,
-                style = MaterialTheme.typography.headlineMedium,
+                style = MaterialTheme.typography.titleLarge,
+                fontFamily = poppinsFontFamily,
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 23.sp
             )
             Text(
-                text = "$100",
+                text = "$$total",
                 color = Color.Black,
-                style = MaterialTheme.typography.headlineLarge,
+                style = MaterialTheme.typography.titleLarge,
+                fontFamily = poppinsFontFamily,
                 fontWeight = FontWeight.Bold,
+                fontSize = 35.sp
             )
         }
     }
