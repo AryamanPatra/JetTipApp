@@ -30,7 +30,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableFloatState
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -46,6 +48,8 @@ import androidx.compose.ui.unit.sp
 import com.example.jettipapp.components.InputField
 import com.example.jettipapp.ui.theme.JetTipAppTheme
 import com.example.jettipapp.ui.theme.poppinsFontFamily
+import com.example.jettipapp.utils.calculateTotalBillPerPerson
+import com.example.jettipapp.utils.calculateTotalTip
 import com.example.jettipapp.widgets.RoundIconButton
 
 class MainActivity : ComponentActivity() {
@@ -54,8 +58,11 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             CreateJetTipApp { innerPadding ->
-                TopHeader(innerPadding = innerPadding)
-                MainContent()
+                val totalBillPerPerson = remember {
+                    mutableFloatStateOf(0f)
+                }
+                TopHeader(totalBillPerPerson,innerPadding = innerPadding)
+                MainContent(totalBillPerPerson)
             }
         }
     }
@@ -82,8 +89,8 @@ fun CreateJetTipApp(content: @Composable (innerPadding: PaddingValues) -> Unit) 
 
 @Preview
 @Composable
-fun TopHeader(totalPerSon: Double = 0.0, innerPadding: PaddingValues = PaddingValues()) {
-    val total = "%.2f".format(totalPerSon)
+fun TopHeader(totalBillPerPerson: MutableFloatState = mutableFloatStateOf(0f), innerPadding: PaddingValues = PaddingValues()) {
+    val total = "%.2f".format(totalBillPerPerson.floatValue)
     Surface(
         modifier = Modifier
             .fillMaxWidth()
@@ -121,8 +128,8 @@ fun TopHeader(totalPerSon: Double = 0.0, innerPadding: PaddingValues = PaddingVa
 
 @Preview
 @Composable
-fun MainContent() {
-    BillForm() { billAmt ->
+fun MainContent(totalBillPerPerson: MutableFloatState = mutableFloatStateOf(0f)) {
+    BillForm(totalBillPerPerson) { billAmt ->
         Log.d("AMT", "MainContent: $billAmt")
     }
 }
@@ -131,6 +138,7 @@ fun MainContent() {
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun BillForm(
+    totalBillPerPerson: MutableFloatState,
     modifier: Modifier = Modifier,
     onValChange: (String) -> Unit = {}
 ) {
@@ -149,6 +157,9 @@ fun BillForm(
         mutableFloatStateOf(0f)
     }
 
+    val tipAmountState = remember {
+        mutableFloatStateOf(0f)
+    }
     val keyboardController = LocalSoftwareKeyboardController.current
     Surface(
         modifier = modifier
@@ -172,22 +183,40 @@ fun BillForm(
                     keyboardController?.hide()
                 }
             )
-//            if (validState) {
-//                SplitAndTipOptions(sliderPositionState) TODO -> But not done yet
-//            }
-            SplitAndTipOptions(sliderPositionState)
+            if (validState) {
+                SplitAndTipOptions(totalBillState, tipAmountState, sliderPositionState,totalBillPerPerson)
+            }
+            else {
+                totalBillPerPerson.floatValue = 0f
+            }
         }
     }
 
 }
 
 @Composable
-fun SplitAndTipOptions(sliderPositionState: MutableFloatState) {
+fun SplitAndTipOptions(
+    totalBillState: MutableState<String>,
+    tipAmountState: MutableFloatState,
+    sliderPositionState: MutableFloatState,
+    totalBillPerPerson: MutableFloatState
+) {
+    val splitByState = remember {
+        mutableIntStateOf(1)
+    }
 //    Split Row
     Row(
         modifier = Modifier.padding(bottom = 10.dp, start = 18.dp, end = 18.dp),
         horizontalArrangement = Arrangement.Start
     ) {
+
+        val validBillState = remember(totalBillState.value.trim()) {
+            totalBillState.value.trim().isNotEmpty() and
+                    !(totalBillState.value.trim().contains(' ')
+                            or totalBillState.value.trim().contains(',')
+                            or totalBillState.value.trim().contains('-'))
+        }
+
         Text(
             text = "Split",
             modifier = Modifier.align(alignment = Alignment.CenterVertically)
@@ -199,20 +228,35 @@ fun SplitAndTipOptions(sliderPositionState: MutableFloatState) {
         ) {
             RoundIconButton(
                 imageVector = Icons.Default.Remove,
-                onClick = { /*TODO*/ }
+                onClick = {
+                    if (splitByState.intValue > 1) splitByState.intValue -= 1
+                    totalBillPerPerson.floatValue = calculateTotalBillPerPerson(
+                        totalBill = totalBillState.value.toFloat(),
+                        splitBy = splitByState.intValue,
+                        tipRatio = sliderPositionState.floatValue
+                    )
+                }
             )
             Text(
-                text = "2",
+                text = "${splitByState.intValue}",
                 modifier = Modifier
                     .align(alignment = Alignment.CenterVertically)
                     .padding(start = 9.dp, end = 9.dp)
             )
             RoundIconButton(
                 imageVector = Icons.Default.Add,
-                onClick = { /*TODO*/ }
+                onClick = {
+                    if (splitByState.intValue < 100) splitByState.intValue += 1
+                    totalBillPerPerson.floatValue = calculateTotalBillPerPerson(
+                        totalBill = totalBillState.value.toFloat(),
+                        splitBy = splitByState.intValue,
+                        tipRatio = sliderPositionState.floatValue
+                    )
+                }
             )
         }
     }
+
 //    Tip Row
     Row(
         modifier = Modifier
@@ -222,7 +266,7 @@ fun SplitAndTipOptions(sliderPositionState: MutableFloatState) {
     ) {
         Text(text = "Tip")
         Spacer(Modifier.width(170.dp))
-        Text(text = "$33.00")
+        Text(text = "$${"%.2f".format(tipAmountState.floatValue).toFloat()}")
     }
 
 //    Slider Column
@@ -234,15 +278,27 @@ fun SplitAndTipOptions(sliderPositionState: MutableFloatState) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "${(sliderPositionState.floatValue * 100).toInt()}%",
+            text = "${("%.2f".format(sliderPositionState.floatValue).toFloat() * 100).toInt()}%",
             fontSize = 25.sp
         )
         Spacer(modifier = Modifier.height(4.dp))
         Slider(
             value = sliderPositionState.floatValue,
+            steps = 100,
             onValueChange = { newValue ->
                 sliderPositionState.floatValue = newValue
+                Log.d("TipRatio",newValue.toString())
+                tipAmountState.floatValue = calculateTotalTip(
+                    tipRatio = sliderPositionState.floatValue,
+                    totalBill = totalBillState.value.toFloat()
+                )
+                totalBillPerPerson.floatValue = calculateTotalBillPerPerson(
+                    totalBill = totalBillState.value.toFloat(),
+                    splitBy = splitByState.intValue,
+                    tipRatio = sliderPositionState.floatValue
+                )
             }
         )
     }
 }
+
