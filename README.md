@@ -10,7 +10,8 @@ JetTipApp is a Tip Calculator application developed using Jetpack Compose. This 
 5. User-Friendly Interface: Simple and clean interface for easy tip calculation.
 
 ## Screenshots
-
+![jettip1](https://github.com/AryamanPatra/JetTipApp/assets/94316664/1abc8782-59a6-4ece-92b7-d33ea8ce69f3)
+![jettip2](https://github.com/AryamanPatra/JetTipApp/assets/94316664/7bcde899-96a7-4f39-817b-0e806936e160)
 
 ## Usage
 1. Open the app.
